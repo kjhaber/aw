@@ -28,10 +28,10 @@ const hookScriptTemplate = `#!/usr/bin/env zsh
 STATE_DIR="%s"
 mkdir -p "$STATE_DIR"
 
-PANE_ID=$(tmux display-message -p "$TMUX_PANE" '#{pane_id}' 2>/dev/null)
-SESSION=$(tmux display-message -p "$TMUX_PANE" '#{session_name}' 2>/dev/null)
-WINDOW=$(tmux display-message -p "$TMUX_PANE" '#{window_name}' 2>/dev/null)
-WINDOW_INDEX=$(tmux display-message -p "$TMUX_PANE" '#{window_index}' 2>/dev/null)
+PANE_ID="$TMUX_PANE"
+SESSION=$(tmux display-message -p -t "$TMUX_PANE" '#{session_name}' 2>/dev/null)
+WINDOW=$(tmux display-message -p -t "$TMUX_PANE" '#{window_name}' 2>/dev/null)
+WINDOW_INDEX=$(tmux display-message -p -t "$TMUX_PANE" '#{window_index}' 2>/dev/null)
 
 SAFE_ID=$(printf '%%s' "$PANE_ID" | tr '%%' '_')
 printf '{"pane":"%%s","session":"%%s","window":"%%s","window_index":"%%s","state":"%s","time":"%%s"}\n' \
