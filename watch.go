@@ -33,7 +33,7 @@ func buildFzfArgs(port int) []string {
 		"--delimiter", "\t",
 		"--with-nth", "1..4", // show all fields except last (target)
 		"--preview", previewCmd,
-		"--preview-window", "right:55%:wrap",
+		"--preview-window", "right:55%:wrap:follow",
 		"--bind", fmt.Sprintf("ctrl-r:reload(%s list)", self),
 		"--bind", "esc:abort",
 		"--header", "Agent Watcher │ Enter: switch  Ctrl-r: refresh  Esc: quit",
