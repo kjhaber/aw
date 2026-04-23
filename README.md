@@ -27,23 +27,28 @@ and then context-switch back. `aw` centralizes that triage loop.
 ## Install
 
 ```sh
-git clone <repo> && cd aw
-make build
-make install          # copies build/aw to ~/.local/bin/aw
-
-aw setup              # installs hooks into ~/.claude/settings.json
+brew install kjhaber/tap/aw
 ```
 
-Add `~/.local/bin` to your `PATH` if it isn't already:
+Then install the Claude Code hooks:
 
 ```sh
-export PATH="$HOME/.local/bin:$PATH"
+aw setup
 ```
 
-Suggested tmux binding (add to `~/.tmux.conf`):
+**Suggested tmux binding** (add to `~/.tmux.conf`):
 
 ```
-bind-key A run-shell "~/.local/bin/aw"
+bind-key A display-popup -E -w '80%' -h '80%' 'aw'
+```
+
+### Build from source
+
+```sh
+git clone https://github.com/kjhaber/aw && cd aw
+make build            # produces build/aw
+make install          # copies build/aw to ~/.local/bin/aw
+aw setup
 ```
 
 ## Usage
