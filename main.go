@@ -1,0 +1,53 @@
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+	if err := run(os.Args[1:]); err != nil {
+		fmt.Fprintf(os.Stderr, "aw: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func run(args []string) error {
+	cmd := "watch"
+	if len(args) > 0 {
+		cmd = args[0]
+		args = args[1:]
+	}
+
+	switch cmd {
+	case "list":
+		return cmdList(args)
+	case "preview":
+		return cmdPreview(args)
+	case "setup":
+		return cmdSetup(args)
+	case "watch", "run":
+		return cmdWatch(args)
+	case "help", "--help", "-h":
+		printUsage()
+		return nil
+	default:
+		return fmt.Errorf("unknown subcommand %q (try: aw help)", cmd)
+	}
+}
+
+func printUsage() {
+	fmt.Print(`aw — Agent Watcher: monitor coding agents across tmux sessions
+
+Usage:
+  aw [watch]         open fzf session picker (default)
+  aw list            print agent window states to stdout
+  aw preview TARGET  print last 20 lines of pane at TARGET (session:window)
+  aw setup           install Claude Code hooks and hook scripts
+
+Keybindings in picker:
+  Enter    switch to selected window
+  Esc/q    quit
+  Ctrl-r   force refresh
+`)
+}
