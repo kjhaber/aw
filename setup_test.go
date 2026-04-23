@@ -8,9 +8,6 @@ import (
 	"testing"
 )
 
-// minimal settings.json structure used by patchSettings
-type settingsDoc map[string]any
-
 func TestPatchSettingsAddsHooks(t *testing.T) {
 	// Start with settings that have no hooks at all
 	initial := `{"permissions": {"allow": []}}`

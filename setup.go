@@ -51,16 +51,6 @@ func writeHookScript(path string, state AgentState, stateDir string) error {
 	return nil
 }
 
-// hookEntry is the JSON structure Claude Code expects in hooks arrays.
-type hookEntry struct {
-	Hooks []hookCommand `json:"hooks"`
-}
-
-type hookCommand struct {
-	Command string `json:"command"`
-	Type    string `json:"type"`
-}
-
 // patchSettings merges aw's hooks into the provided settings.json bytes.
 // It is idempotent: re-running with the same scripts won't duplicate entries.
 func patchSettings(data []byte, stopScript, resumeScript string) ([]byte, error) {
