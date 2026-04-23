@@ -1,0 +1,50 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: .
+    binary: aw
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - formats:
+      - tar.gz
+    name_template: "aw_{{.Version}}_{{.Os}}_{{.Arch}}"
+
+brews:
+  - name: aw
+    directory: Formula
+    repository:
+      owner: kjhaber
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: https://github.com/kjhaber/aw
+    description: "Monitor coding agents across tmux sessions"
+    license: MIT
+    install: |
+      bin.install "aw"
+    test: |
+      system "#{bin}/aw", "--version"
+
+checksum:
+  name_template: "aw_{{.Version}}_checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"

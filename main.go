@@ -5,6 +5,9 @@ import (
 	"os"
 )
 
+// version is set at build time via -ldflags "-X main.version=..."
+var version = "dev"
+
 func main() {
 	if err := run(os.Args[1:]); err != nil {
 		fmt.Fprintf(os.Stderr, "aw: %v\n", err)
@@ -28,6 +31,9 @@ func run(args []string) error {
 		return cmdSetup(args)
 	case "watch", "run":
 		return cmdWatch(args)
+	case "version", "--version", "-v":
+		fmt.Println("aw version", version)
+		return nil
 	case "help", "--help", "-h":
 		printUsage()
 		return nil
