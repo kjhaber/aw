@@ -177,3 +177,49 @@ func TestBuildWindowEntry_NoStateWithProcess(t *testing.T) {
 		t.Errorf("agentName: got %q want %q", e.agentName, "claude")
 	}
 }
+
+// TestDeduplicateByWindow verifies that when multiple panes belong to the same
+// window, we keep one entry per window using the most urgent state.
+func TestDeduplicateByWindow(t *testing.T) {
+	entries := []windowEntry{
+		// window myapp:0 — Claude pane (WAIT) + shell pane (unknown/skipped)
+		{session: "myapp", windowIdx: "0", windowName: "auth", state: stateWait, agentName: "claude", target: "myapp:0"},
+		// window myapp:1 — Claude pane (WORK) + shell pane (also present)
+		{session: "myapp", windowIdx: "1", windowName: "fix", state: stateWork, agentName: "claude", target: "myapp:1"},
+		{session: "myapp", windowIdx: "1", windowName: "fix", state: stateUnknown, agentName: "", target: "myapp:1"},
+	}
+
+	got := deduplicateByWindow(entries)
+
+	if len(got) != 2 {
+		t.Fatalf("expected 2 window entries, got %d", len(got))
+	}
+
+	byTarget := make(map[string]windowEntry)
+	for _, e := range got {
+		byTarget[e.target] = e
+	}
+
+	if byTarget["myapp:0"].state != stateWait {
+		t.Errorf("myapp:0: want stateWait, got %v", byTarget["myapp:0"].state)
+	}
+	// myapp:1 had one WORK pane and one unknown pane — WORK wins
+	if byTarget["myapp:1"].state != stateWork {
+		t.Errorf("myapp:1: want stateWork, got %v", byTarget["myapp:1"].state)
+	}
+}
+
+func TestDeduplicateByWindow_WaitBeatsWork(t *testing.T) {
+	// Same window, one pane WAIT, one pane WORK — WAIT must win
+	entries := []windowEntry{
+		{session: "s", windowIdx: "0", windowName: "w", state: stateWork, target: "s:0"},
+		{session: "s", windowIdx: "0", windowName: "w", state: stateWait, target: "s:0"},
+	}
+	got := deduplicateByWindow(entries)
+	if len(got) != 1 {
+		t.Fatalf("expected 1 entry, got %d", len(got))
+	}
+	if got[0].state != stateWait {
+		t.Errorf("want stateWait, got %v", got[0].state)
+	}
+}

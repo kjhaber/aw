@@ -22,13 +22,16 @@ func (w TmuxWindow) Target() string {
 	return w.Session + ":" + w.WindowIndex
 }
 
-// listTmuxWindows runs tmux to list all windows across all sessions.
+// listTmuxWindows runs tmux to list all panes across all sessions.
+// Using list-panes -a (rather than list-windows -a) ensures we see every pane
+// in split windows, not just the currently active one. Callers deduplicate by
+// window after determining which pane holds an agent.
 func listTmuxWindows() ([]TmuxWindow, error) {
-	out, err := exec.Command("tmux", "list-windows", "-a", "-F",
+	out, err := exec.Command("tmux", "list-panes", "-a", "-F",
 		"#{session_name}\t#{window_index}\t#{window_name}\t#{window_active}\t#{pane_id}\t#{pane_pid}",
 	).Output()
 	if err != nil {
-		return nil, fmt.Errorf("tmux list-windows: %w", err)
+		return nil, fmt.Errorf("tmux list-panes: %w", err)
 	}
 	return parseTmuxWindows(string(out)), nil
 }

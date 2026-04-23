@@ -114,11 +114,30 @@ func buildWindowEntry(win TmuxWindow, stateMap map[string]PaneState, procs []pro
 	return e
 }
 
+// deduplicateByWindow collapses per-pane entries into one entry per window,
+// keeping the most urgent state found across all panes in that window.
+func deduplicateByWindow(paneEntries []windowEntry) []windowEntry {
+	byTarget := make(map[string]windowEntry)
+	for _, e := range paneEntries {
+		existing, seen := byTarget[e.target]
+		if !seen || e.state < existing.state {
+			byTarget[e.target] = e
+		}
+	}
+	result := make([]windowEntry, 0, len(byTarget))
+	for _, e := range byTarget {
+		result = append(result, e)
+	}
+	return result
+}
+
 // collectEntries gathers all window entries across tmux sessions.
 func collectEntries() ([]windowEntry, error) {
-	wins, err := listTmuxWindows()
+	// list-panes -a gives one row per pane so we see every pane in split
+	// windows, not just whichever pane happens to be active.
+	panes, err := listTmuxWindows()
 	if err != nil {
-		return nil, fmt.Errorf("list tmux windows: %w", err)
+		return nil, fmt.Errorf("list tmux panes: %w", err)
 	}
 
 	rawStates, err := readAllStates(stateDir())
@@ -137,13 +156,15 @@ func collectEntries() ([]windowEntry, error) {
 	}
 	procs := parseProcessList(procRaw)
 
-	var entries []windowEntry
-	for _, win := range wins {
-		e := buildWindowEntry(win, stateMap, procs)
+	var paneEntries []windowEntry
+	for _, pane := range panes {
+		e := buildWindowEntry(pane, stateMap, procs)
 		if e != nil {
-			entries = append(entries, *e)
+			paneEntries = append(paneEntries, *e)
 		}
 	}
+
+	entries := deduplicateByWindow(paneEntries)
 	sortWindowEntries(entries)
 	return entries, nil
 }
