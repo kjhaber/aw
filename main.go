@@ -25,6 +25,8 @@ func run(args []string) error {
 	switch cmd {
 	case "list":
 		return cmdList(args)
+	case "pick":
+		return cmdPick(args)
 	case "preview":
 		return cmdPreview(args)
 	case "setup":
@@ -47,13 +49,16 @@ func printUsage() {
 
 Usage:
   aw [watch]         open fzf session picker (default)
+  aw pick -          switch back to the previously visited window
+  aw pick TARGET     switch directly to TARGET (session:window)
   aw list            print agent window states to stdout
   aw preview TARGET  print last 20 lines of pane at TARGET (session:window)
   aw setup           install Claude Code hooks and hook scripts
 
 Keybindings in picker:
   Enter    switch to selected window
-  Esc/q    quit
+  Ctrl-b   go back to previous window
   Ctrl-r   force refresh
+  Esc/q    quit
 `)
 }

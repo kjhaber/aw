@@ -111,3 +111,43 @@ func TestReadAllStatesIgnoresNonJSON(t *testing.T) {
 		t.Fatalf("expected empty, got %d", len(all))
 	}
 }
+
+func TestLastWindowRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	target := "myapp:3"
+	if err := writeLastWindow(dir, target); err != nil {
+		t.Fatalf("writeLastWindow: %v", err)
+	}
+	got, err := readLastWindow(dir)
+	if err != nil {
+		t.Fatalf("readLastWindow: %v", err)
+	}
+	if got != target {
+		t.Errorf("got %q want %q", got, target)
+	}
+}
+
+func TestReadLastWindowMissing(t *testing.T) {
+	dir := t.TempDir()
+	_, err := readLastWindow(dir)
+	if err == nil {
+		t.Fatal("expected error for missing last-window file, got nil")
+	}
+}
+
+func TestLastWindowOverwrite(t *testing.T) {
+	dir := t.TempDir()
+	if err := writeLastWindow(dir, "session1:0"); err != nil {
+		t.Fatalf("writeLastWindow: %v", err)
+	}
+	if err := writeLastWindow(dir, "session2:1"); err != nil {
+		t.Fatalf("writeLastWindow second: %v", err)
+	}
+	got, err := readLastWindow(dir)
+	if err != nil {
+		t.Fatalf("readLastWindow: %v", err)
+	}
+	if got != "session2:1" {
+		t.Errorf("got %q want %q", got, "session2:1")
+	}
+}

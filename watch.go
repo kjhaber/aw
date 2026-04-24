@@ -27,6 +27,8 @@ func buildFzfArgs(port int) []string {
 	previewCmd := fmt.Sprintf("%s preview {-1}", self)
 	listenAddr := fmt.Sprintf("localhost:%d", port)
 
+	backCmd := fmt.Sprintf("execute(%s pick -)+abort", self)
+
 	return []string{
 		"--ansi",
 		"--listen", listenAddr,
@@ -36,7 +38,8 @@ func buildFzfArgs(port int) []string {
 		"--preview-window", "right:55%:wrap:follow",
 		"--bind", fmt.Sprintf("ctrl-r:reload(%s list)", self),
 		"--bind", "esc:abort",
-		"--header", "Agent Watcher │ Enter: switch  Ctrl-r: refresh  Esc: quit",
+		"--bind", fmt.Sprintf("ctrl-b:%s", backCmd),
+		"--header", "Agent Watcher │ Enter: switch  Ctrl-r: refresh  Ctrl-b: back  Esc: quit",
 		"--no-sort", // preserve our priority ordering
 		"--layout", "reverse",
 	}
@@ -127,6 +130,11 @@ func cmdWatch(_ []string) error {
 	selected := parseSelectedTarget(out.String())
 	if selected == "" {
 		return nil
+	}
+
+	// Record current window as "previous" so 'aw pick -' can return here.
+	if cur, err := activeWindow(); err == nil && cur != "" {
+		_ = writeLastWindow(stateDir(), cur)
 	}
 
 	// Switch to the selected tmux window.

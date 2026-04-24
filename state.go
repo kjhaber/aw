@@ -69,6 +69,32 @@ func readState(dir, paneID string) (PaneState, error) {
 	return s, nil
 }
 
+// lastWindowFile returns the path to the file that stores the last visited window target.
+func lastWindowFile(dir string) string {
+	return filepath.Join(dir, ".last-window")
+}
+
+// writeLastWindow persists target (e.g. "myapp:2") as the most recently visited window.
+func writeLastWindow(dir, target string) error {
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("mkdir state dir: %w", err)
+	}
+	return os.WriteFile(lastWindowFile(dir), []byte(target), 0644)
+}
+
+// readLastWindow returns the previously visited window target, or an error if none is recorded.
+func readLastWindow(dir string) (string, error) {
+	data, err := os.ReadFile(lastWindowFile(dir))
+	if err != nil {
+		return "", fmt.Errorf("no previous window recorded (use 'aw' to pick a window first)")
+	}
+	target := strings.TrimSpace(string(data))
+	if target == "" {
+		return "", fmt.Errorf("no previous window recorded")
+	}
+	return target, nil
+}
+
 // readAllStates reads all state files from dir. Non-.json files are ignored.
 func readAllStates(dir string) ([]PaneState, error) {
 	entries, err := os.ReadDir(dir)

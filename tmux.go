@@ -64,6 +64,15 @@ func parseTmuxWindows(raw string) []TmuxWindow {
 	return wins
 }
 
+// activeWindow returns the current active tmux window as "session:window_index".
+func activeWindow() (string, error) {
+	out, err := exec.Command("tmux", "display-message", "-p", "#{session_name}:#{window_index}").Output()
+	if err != nil {
+		return "", fmt.Errorf("tmux display-message: %w", err)
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
 // switchToWindow runs tmux switch-client to focus the given target.
 func switchToWindow(target string) error {
 	return exec.Command("tmux", "switch-client", "-t", target).Run()

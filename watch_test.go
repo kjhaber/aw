@@ -43,3 +43,14 @@ func TestParseSelectedTargetEmpty(t *testing.T) {
 		t.Errorf("expected empty target for empty row, got %q", target)
 	}
 }
+
+func TestFzfArgsBackBinding(t *testing.T) {
+	args := buildFzfArgs(9999)
+	joined := strings.Join(args, " ")
+	if !strings.Contains(joined, "ctrl-b") {
+		t.Errorf("fzf args missing ctrl-b back binding: %v", args)
+	}
+	if !strings.Contains(joined, "pick -") {
+		t.Errorf("fzf args ctrl-b binding should invoke 'pick -': %v", args)
+	}
+}
