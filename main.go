@@ -38,6 +38,8 @@ func run(args []string) error {
 	case "version", "--version", "-v":
 		fmt.Println("aw version", version)
 		return nil
+	case "completion":
+		return cmdCompletion(args)
 	case "help", "--help", "-h":
 		printUsage()
 		return nil
@@ -57,6 +59,7 @@ Usage:
   aw preview TARGET       print last 20 lines of pane at TARGET (session:window)
   aw respond TARGET [text]  send text (default: "1") to TARGET's pane and press Enter
   aw setup                install Claude Code hooks and hook scripts
+  aw completion <shell>   print shell completion script (bash, zsh, fish)
 
 Keybindings in picker:
   Enter    switch to selected window

@@ -35,6 +35,9 @@ brews:
     license: MIT
     install: |
       bin.install "aw"
+      bash_completion.install Utils.safe_popen_read(bin/"aw", "completion", "bash") => "aw"
+      zsh_completion.install Utils.safe_popen_read(bin/"aw", "completion", "zsh") => "_aw"
+      fish_completion.install Utils.safe_popen_read(bin/"aw", "completion", "fish") => "aw.fish"
     test: |
       system "#{bin}/aw", "--version"
 
