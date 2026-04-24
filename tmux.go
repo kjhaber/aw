@@ -88,3 +88,8 @@ func capturePane(target string, lines int) (string, error) {
 	}
 	return string(out), nil
 }
+
+// sendKeysToTarget sends text followed by Enter to the active pane at target.
+func sendKeysToTarget(target, text string) error {
+	return exec.Command("tmux", "send-keys", "-t", target, text, "Enter").Run()
+}

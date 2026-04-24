@@ -28,6 +28,7 @@ func buildFzfArgs(port int) []string {
 	listenAddr := fmt.Sprintf("localhost:%d", port)
 
 	backCmd := fmt.Sprintf("execute(%s pick -)+abort", self)
+	respondCmd := fmt.Sprintf("execute-silent(%s respond {-1})+reload(%s list)", self, self)
 
 	return []string{
 		"--ansi",
@@ -39,7 +40,8 @@ func buildFzfArgs(port int) []string {
 		"--bind", fmt.Sprintf("ctrl-r:reload(%s list)", self),
 		"--bind", "esc:abort",
 		"--bind", fmt.Sprintf("ctrl-b:%s", backCmd),
-		"--header", "Agent Watcher │ Enter: switch  Ctrl-r: refresh  Ctrl-b: back  Esc: quit",
+		"--bind", fmt.Sprintf("ctrl-y:%s", respondCmd),
+		"--header", "Agent Watcher │ Enter: switch  Ctrl-r: refresh  Ctrl-b: back  Ctrl-y: answer  Esc: quit",
 		"--no-sort", // preserve our priority ordering
 		"--layout", "reverse",
 	}

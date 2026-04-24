@@ -29,6 +29,8 @@ func run(args []string) error {
 		return cmdPick(args)
 	case "preview":
 		return cmdPreview(args)
+	case "respond":
+		return cmdRespond(args)
 	case "setup":
 		return cmdSetup(args)
 	case "watch", "run":
@@ -48,17 +50,19 @@ func printUsage() {
 	fmt.Print(`aw — Agent Watcher: monitor coding agents across tmux sessions
 
 Usage:
-  aw [watch]         open fzf session picker (default)
-  aw pick -          switch back to the previously visited window
-  aw pick TARGET     switch directly to TARGET (session:window)
-  aw list            print agent window states to stdout
-  aw preview TARGET  print last 20 lines of pane at TARGET (session:window)
-  aw setup           install Claude Code hooks and hook scripts
+  aw [watch]              open fzf session picker (default)
+  aw pick -               switch back to the previously visited window
+  aw pick TARGET          switch directly to TARGET (session:window)
+  aw list                 print agent window states to stdout
+  aw preview TARGET       print last 20 lines of pane at TARGET (session:window)
+  aw respond TARGET [text]  send text (default: "1") to TARGET's pane and press Enter
+  aw setup                install Claude Code hooks and hook scripts
 
 Keybindings in picker:
   Enter    switch to selected window
   Ctrl-b   go back to previous window
   Ctrl-r   force refresh
+  Ctrl-y   answer the selected agent's prompt (sends "1" + Enter)
   Esc/q    quit
 `)
 }
