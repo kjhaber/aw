@@ -53,7 +53,7 @@ func writeHookScript(path string, state AgentState, stateDir string) error {
 
 // patchSettings merges aw's hooks into the provided settings.json bytes.
 // It is idempotent: re-running with the same scripts won't duplicate entries.
-func patchSettings(data []byte, stopScript, resumeScript string) ([]byte, error) {
+func patchSettings(data []byte, stopScript, resumeScript, permissionScript, toolDoneScript string) ([]byte, error) {
 	// Parse as generic map to preserve unknown fields.
 	var doc map[string]any
 	if err := json.Unmarshal(data, &doc); err != nil {
@@ -71,6 +71,12 @@ func patchSettings(data []byte, stopScript, resumeScript string) ([]byte, error)
 
 	hooksRaw["Stop"] = mergeHook(hooksRaw["Stop"], stopScript)
 	hooksRaw["UserPromptSubmit"] = mergeHook(hooksRaw["UserPromptSubmit"], resumeScript)
+	if permissionScript != "" {
+		hooksRaw["PermissionRequest"] = mergeHook(hooksRaw["PermissionRequest"], permissionScript)
+	}
+	if toolDoneScript != "" {
+		hooksRaw["PostToolUse"] = mergeHook(hooksRaw["PostToolUse"], toolDoneScript)
+	}
 
 	out, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {
@@ -129,6 +135,8 @@ func cmdSetup(_ []string) error {
 
 	stopScript := filepath.Join(hDir, "aw-hook-stop")
 	resumeScript := filepath.Join(hDir, "aw-hook-resume")
+	permissionScript := filepath.Join(hDir, "aw-hook-permission")
+	toolDoneScript := filepath.Join(hDir, "aw-hook-tool-done")
 
 	fmt.Println("Installing hook scripts...")
 	if err := writeHookScript(stopScript, AgentStopped, sDir); err != nil {
@@ -141,6 +149,16 @@ func cmdSetup(_ []string) error {
 	}
 	fmt.Printf("  wrote %s\n", resumeScript)
 
+	if err := writeHookScript(permissionScript, AgentStopped, sDir); err != nil {
+		return err
+	}
+	fmt.Printf("  wrote %s\n", permissionScript)
+
+	if err := writeHookScript(toolDoneScript, AgentActive, sDir); err != nil {
+		return err
+	}
+	fmt.Printf("  wrote %s\n", toolDoneScript)
+
 	settingsPath := claudeSettingsPath()
 	fmt.Printf("Patching %s...\n", settingsPath)
 
@@ -149,7 +167,7 @@ func cmdSetup(_ []string) error {
 		return fmt.Errorf("read settings: %w", err)
 	}
 
-	patched, err := patchSettings(data, stopScript, resumeScript)
+	patched, err := patchSettings(data, stopScript, resumeScript, permissionScript, toolDoneScript)
 	if err != nil {
 		return err
 	}

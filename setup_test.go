@@ -15,7 +15,7 @@ func TestPatchSettingsAddsHooks(t *testing.T) {
 	stopScript := "/home/user/.local/share/aw/hooks/aw-hook-stop"
 	resumeScript := "/home/user/.local/share/aw/hooks/aw-hook-resume"
 
-	patched, err := patchSettings([]byte(initial), stopScript, resumeScript)
+	patched, err := patchSettings([]byte(initial), stopScript, resumeScript, "", "")
 	if err != nil {
 		t.Fatalf("patchSettings: %v", err)
 	}
@@ -48,11 +48,11 @@ func TestPatchSettingsIdempotent(t *testing.T) {
 	initial := `{"permissions": {}}`
 
 	// Apply twice — should not duplicate entries
-	once, err := patchSettings([]byte(initial), stopScript, resumeScript)
+	once, err := patchSettings([]byte(initial), stopScript, resumeScript, "", "")
 	if err != nil {
 		t.Fatalf("first patchSettings: %v", err)
 	}
-	twice, err := patchSettings(once, stopScript, resumeScript)
+	twice, err := patchSettings(once, stopScript, resumeScript, "", "")
 	if err != nil {
 		t.Fatalf("second patchSettings: %v", err)
 	}
@@ -81,7 +81,7 @@ func TestPatchSettingsPreservesExistingHooks(t *testing.T) {
   }
 }`
 
-	patched, err := patchSettings([]byte(initial), stopScript, resumeScript)
+	patched, err := patchSettings([]byte(initial), stopScript, resumeScript, "", "")
 	if err != nil {
 		t.Fatalf("patchSettings: %v", err)
 	}
@@ -126,5 +126,70 @@ func TestWriteHookScript(t *testing.T) {
 	// Must be a shell script
 	if !strings.HasPrefix(content, "#!/") {
 		t.Errorf("hook script missing shebang: %s", content)
+	}
+}
+
+func TestPatchSettingsAddsPermissionAndToolDoneHooks(t *testing.T) {
+	initial := `{"permissions": {"allow": []}}`
+
+	stopScript := "/share/aw/hooks/aw-hook-stop"
+	resumeScript := "/share/aw/hooks/aw-hook-resume"
+	permissionScript := "/share/aw/hooks/aw-hook-permission"
+	toolDoneScript := "/share/aw/hooks/aw-hook-tool-done"
+
+	patched, err := patchSettings([]byte(initial), stopScript, resumeScript, permissionScript, toolDoneScript)
+	if err != nil {
+		t.Fatalf("patchSettings: %v", err)
+	}
+
+	var doc map[string]any
+	if err := json.Unmarshal(patched, &doc); err != nil {
+		t.Fatalf("unmarshal patched: %v", err)
+	}
+
+	hooks, ok := doc["hooks"].(map[string]any)
+	if !ok {
+		t.Fatal("patched settings missing 'hooks' key")
+	}
+
+	if _, ok := hooks["PermissionRequest"]; !ok {
+		t.Error("patched settings missing PermissionRequest hooks key")
+	}
+	if _, ok := hooks["PostToolUse"]; !ok {
+		t.Error("patched settings missing PostToolUse hooks key")
+	}
+
+	raw := string(patched)
+	if !strings.Contains(raw, permissionScript) {
+		t.Errorf("patched settings missing permission script: %s", raw)
+	}
+	if !strings.Contains(raw, toolDoneScript) {
+		t.Errorf("patched settings missing tool-done script: %s", raw)
+	}
+}
+
+func TestPatchSettingsIdempotentAllHooks(t *testing.T) {
+	initial := `{"permissions": {}}`
+
+	stopScript := "/share/aw/hooks/aw-hook-stop"
+	resumeScript := "/share/aw/hooks/aw-hook-resume"
+	permissionScript := "/share/aw/hooks/aw-hook-permission"
+	toolDoneScript := "/share/aw/hooks/aw-hook-tool-done"
+
+	once, err := patchSettings([]byte(initial), stopScript, resumeScript, permissionScript, toolDoneScript)
+	if err != nil {
+		t.Fatalf("first patchSettings: %v", err)
+	}
+	twice, err := patchSettings(once, stopScript, resumeScript, permissionScript, toolDoneScript)
+	if err != nil {
+		t.Fatalf("second patchSettings: %v", err)
+	}
+
+	raw := string(twice)
+	if count := strings.Count(raw, permissionScript); count != 1 {
+		t.Errorf("expected exactly 1 occurrence of permission script, got %d\n%s", count, raw)
+	}
+	if count := strings.Count(raw, toolDoneScript); count != 1 {
+		t.Errorf("expected exactly 1 occurrence of tool-done script, got %d\n%s", count, raw)
 	}
 }
