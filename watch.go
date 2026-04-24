@@ -24,7 +24,7 @@ func buildFzfArgs(port int) []string {
 		self = "aw"
 	}
 
-	previewCmd := fmt.Sprintf("%s preview {-1}", self)
+	previewCmd := fmt.Sprintf("%s preview {-2}", self)
 	listenAddr := fmt.Sprintf("localhost:%d", port)
 
 	backCmd := fmt.Sprintf("execute(%s pick -)+abort", self)

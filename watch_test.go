@@ -18,9 +18,14 @@ func TestFzfArgs(t *testing.T) {
 	if !strings.Contains(joined, "--ansi") {
 		t.Errorf("fzf args missing --ansi: %v", args)
 	}
-	// Must configure preview command ending in "preview {-1}"
-	if !strings.Contains(joined, "preview {-1}") {
-		t.Errorf("fzf args missing 'preview {-1}' in preview command: %v", args)
+	// Preview must use {-2} (pane ID) so it targets the agent pane directly,
+	// not the currently active pane in the window.
+	if !strings.Contains(joined, "preview {-2}") {
+		t.Errorf("fzf args preview should use {-2} (pane ID), got: %v", args)
+	}
+	// Respond/switch must still use {-1} (window target).
+	if !strings.Contains(joined, "respond {-1}") {
+		t.Errorf("fzf args respond binding should use {-1} (window target): %v", args)
 	}
 	// Last field delimiter for target
 	if !strings.Contains(joined, "--delimiter") {
@@ -29,8 +34,9 @@ func TestFzfArgs(t *testing.T) {
 }
 
 func TestParseSelectedTarget(t *testing.T) {
-	// fzf outputs the selected row; target is the last tab-delimited field
-	row := "🔴 \033[31mWAIT\033[0m\tmyapp\tauth-feature\tclaude\tmyapp:1"
+	// fzf outputs the selected row; target is the last tab-delimited field.
+	// Row format: icon+state \t session \t window \t agent \t paneID \t target
+	row := "🔴 \033[31mWAIT\033[0m\tmyapp\tauth-feature\tclaude\t%41\tmyapp:1"
 	target := parseSelectedTarget(row)
 	if target != "myapp:1" {
 		t.Errorf("parseSelectedTarget: got %q want %q", target, "myapp:1")

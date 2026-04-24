@@ -223,3 +223,59 @@ func TestDeduplicateByWindow_WaitBeatsWork(t *testing.T) {
 		t.Errorf("want stateWait, got %v", got[0].state)
 	}
 }
+
+// TestBuildWindowEntryPopulatesPaneID verifies that buildWindowEntry stores the
+// pane ID from the TmuxWindow so the preview command can target it directly.
+func TestBuildWindowEntryPopulatesPaneID(t *testing.T) {
+	stateMap := map[string]PaneState{
+		"%55": {PaneID: "%55", AgentState: AgentActive},
+	}
+	win := TmuxWindow{Session: "s", WindowIndex: "0", WindowName: "w", PaneID: "%55", PanePID: 100}
+	e := buildWindowEntry(win, stateMap, nil)
+	if e == nil {
+		t.Fatal("expected non-nil entry")
+	}
+	if e.paneID != "%55" {
+		t.Errorf("paneID: got %q want %q", e.paneID, "%55")
+	}
+}
+
+// TestFzfRowPaneIDField verifies that fzfRow embeds the pane ID as the
+// second-to-last tab-delimited field, one slot before the window target.
+func TestFzfRowPaneIDField(t *testing.T) {
+	e := windowEntry{
+		session:    "myapp",
+		windowIdx:  "1",
+		windowName: "auth",
+		state:      stateWait,
+		agentName:  "claude",
+		paneID:     "%41",
+		target:     "myapp:1",
+	}
+	row := e.fzfRow()
+	fields := strings.Split(row, "\t")
+	// Last field is window target, second-to-last is pane ID.
+	if fields[len(fields)-1] != "myapp:1" {
+		t.Errorf("last field should be target, got %q", fields[len(fields)-1])
+	}
+	if fields[len(fields)-2] != "%41" {
+		t.Errorf("second-to-last field should be pane ID %%41, got %q", fields[len(fields)-2])
+	}
+}
+
+// TestDeduplicateByWindowPreservesPaneID verifies that the winning entry's
+// pane ID is kept after deduplication.
+func TestDeduplicateByWindowPreservesPaneID(t *testing.T) {
+	entries := []windowEntry{
+		{session: "s", windowIdx: "0", state: stateWait, paneID: "%10", target: "s:0"},
+		{session: "s", windowIdx: "0", state: stateWork, paneID: "%11", target: "s:0"},
+	}
+	got := deduplicateByWindow(entries)
+	if len(got) != 1 {
+		t.Fatalf("expected 1 entry, got %d", len(got))
+	}
+	// stateWait wins; its pane ID (%10) should be preserved.
+	if got[0].paneID != "%10" {
+		t.Errorf("paneID: got %q want %%10", got[0].paneID)
+	}
+}

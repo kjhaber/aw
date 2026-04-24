@@ -23,6 +23,7 @@ type windowEntry struct {
 	windowName string
 	state      windowState
 	agentName  string
+	paneID     string // hidden second-to-last field: specific pane with the agent
 	target     string // hidden last field: "session:windowIdx"
 }
 
@@ -51,8 +52,9 @@ func (e windowEntry) stateIcon() string {
 }
 
 // fzfRow returns the tab-delimited string for this entry.
-// Format: icon+state \t session \t window \t agent \t target(hidden)
-// The target is always the last field so fzf can reference it with {-1}.
+// Format: icon+state \t session \t window \t agent \t paneID(hidden) \t target(hidden)
+// paneID ({-2}) is used by the preview command to capture the exact agent pane.
+// target ({-1}) is used for window switching and respond commands.
 func (e windowEntry) fzfRow() string {
 	agent := e.agentName
 	if agent == "" {
@@ -64,6 +66,7 @@ func (e windowEntry) fzfRow() string {
 		e.session,
 		e.windowName,
 		agent,
+		e.paneID,
 		e.target,
 	}, "\t")
 }
@@ -88,6 +91,7 @@ func buildWindowEntry(win TmuxWindow, stateMap map[string]PaneState, procs []pro
 		session:    win.Session,
 		windowIdx:  win.WindowIndex,
 		windowName: win.WindowName,
+		paneID:     win.PaneID,
 		target:     win.Target(),
 	}
 
